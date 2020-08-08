@@ -325,4 +325,26 @@ cat <<EOF >EXPECTED
 EOF
 test_expect_equal_file EXPECTED OUTPUT
 
+test_begin_subtest "saved query from config file"
+query_name="test${RANDOM}"
+printf "Before:\n" > OUTPUT
+notmuch address --deduplicate=no --output=sender query:$query_name 2>&1 | sort >> OUTPUT
+cp notmuch-config old-config
+printf "\n[query]\n${query_name} = from:foo.bar@example.com\n" >> notmuch-config
+printf "After:\n" >> OUTPUT
+notmuch address --deduplicate=no --output=sender query:$query_name | sort >> OUTPUT
+cat <<EOF > EXPECTED
+Before:
+After:
+Bar <Foo.Bar@Example.Com>
+Foo <foo.bar@example.com>
+Foo Bar <Foo.Bar@Example.Com>
+Foo Bar <foo.bar@example.com>
+Foo Bar <foo.bar@example.com>
+foo.bar@example.com
+foo.bar@example.com
+EOF
+cp old-config notmuch-config
+test_expect_equal_file EXPECTED OUTPUT
+
 test_done

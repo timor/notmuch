@@ -189,4 +189,39 @@ test_begin_subtest "parts do not have adjacent term positions"
 output=$(notmuch search id:termpos and '"c x"')
 test_expect_equal "$output" ""
 
+backup_database
+test_begin_subtest "search with alternate config"
+cp notmuch-config alt-config
+notmuch --config=alt-config config set search.exclude_tags foobar17
+notmuch tag -- +foobar17 '*'
+output=$(notmuch --config=alt-config count '*')
+test_expect_equal "$output" "0"
+restore_database
+
+test_begin_subtest "search with saved query from config file"
+query_name="test${RANDOM}"
+printf "Before:\n" > OUTPUT
+notmuch search query:$query_name 2>&1 | notmuch_search_sanitize >> OUTPUT
+cp notmuch-config old-config
+printf "\n[query]\n${query_name} = from:cworth\n" >> notmuch-config
+printf "After:\n" >> OUTPUT
+notmuch search query:$query_name 2>&1 | notmuch_search_sanitize >> OUTPUT
+cat <<EOF > EXPECTED
+Before:
+After:
+thread:XXX   2009-11-18 [1/2] Carl Worth| Alex Botero-Lowry; [notmuch] [PATCH] Error out if no query is supplied to search instead of going into an infinite loop (attachment inbox unread)
+thread:XXX   2009-11-18 [1/2] Carl Worth| Ingmar Vanhassel; [notmuch] [PATCH] Typsos (inbox unread)
+thread:XXX   2009-11-18 [1/3] Carl Worth| Adrian Perez de Castro, Keith Packard; [notmuch] Introducing myself (inbox signed unread)
+thread:XXX   2009-11-18 [1/3] Carl Worth| Israel Herraiz, Keith Packard; [notmuch] New to the list (inbox unread)
+thread:XXX   2009-11-18 [1/3] Carl Worth| Jan Janak; [notmuch] What a great idea! (inbox unread)
+thread:XXX   2009-11-18 [1/2] Carl Worth| Jan Janak; [notmuch] [PATCH] Older versions of install do not support -C. (inbox unread)
+thread:XXX   2009-11-18 [1/3(4)] Carl Worth| Aron Griffis, Keith Packard; [notmuch] archive (inbox unread)
+thread:XXX   2009-11-18 [1/2] Carl Worth| Keith Packard; [notmuch] [PATCH] Make notmuch-show 'X' (and 'x') commands remove inbox (and unread) tags (inbox unread)
+thread:XXX   2009-11-18 [1/7] Carl Worth| Lars Kellogg-Stedman, Mikhail Gusarov, Keith Packard; [notmuch] Working with Maildir storage? (inbox signed unread)
+thread:XXX   2009-11-18 [2/5] Carl Worth| Mikhail Gusarov, Keith Packard; [notmuch] [PATCH 1/2] Close message file after parsing message headers (inbox unread)
+thread:XXX   2009-11-17 [1/2] Carl Worth| Alex Botero-Lowry; [notmuch] preliminary FreeBSD support (attachment inbox unread)
+EOF
+cp old-config notmuch-config
+test_expect_equal_file EXPECTED OUTPUT
+
 test_done
