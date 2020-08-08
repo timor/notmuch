@@ -10,4 +10,13 @@ notmuch show foo..
 exit_code=$?
 test_expect_equal 1 $exit_code
 
+backup_database
+test_begin_subtest "show with alternate config"
+cp notmuch-config alt-config
+notmuch --config=alt-config config set search.exclude_tags foobar17
+notmuch tag -- +foobar17 '*'
+output=$(notmuch --config=alt-config show '*')
+test_expect_equal "$output" ""
+restore_database
+
 test_done
