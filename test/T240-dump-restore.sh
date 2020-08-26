@@ -82,6 +82,33 @@ test_begin_subtest "dump --output=outfile --"
 notmuch dump --output=dump-1-arg-dash.actual --
 test_expect_equal_file dump.expected dump-1-arg-dash.actual
 
+# configuration
+
+test_begin_subtest "dump with saved query from config file"
+query_name="test${RANDOM}"
+printf "Before:\n" > OUTPUT
+notmuch dump --include=tags query:$query_name >> OUTPUT
+printf "\nAfter:\n" >> OUTPUT
+cp notmuch-config old-config
+printf "\n[query]\n${query_name} = tag:signed\n" >> notmuch-config
+notmuch dump --include=tags query:$query_name >> OUTPUT
+cat <<EOF > EXPECTED
+Before:
+#notmuch-dump batch-tag:3 tags
+
+After:
+#notmuch-dump batch-tag:3 tags
++inbox +signed +unread -- id:20091118002059.067214ed@hikari
++attachment +inbox +signed +unread -- id:20091118005829.GB25380@dottiness.seas.harvard.edu
++attachment +inbox +signed +unread -- id:20091118010116.GC25380@dottiness.seas.harvard.edu
++inbox +signed +unread -- id:20091118005040.GA25380@dottiness.seas.harvard.edu
++inbox +signed +unread -- id:87iqd9rn3l.fsf@vertex.dottedmag
++inbox +signed +unread -- id:20091117203301.GV3165@dottiness.seas.harvard.edu
++inbox +signed +unread -- id:20091117190054.GU3165@dottiness.seas.harvard.edu
+EOF
+cp old-config notmuch-config
+test_expect_equal_file EXPECTED OUTPUT
+
 # gzipped output
 
 test_begin_subtest "dump --gzip"
@@ -322,6 +349,7 @@ EOF
 
 test_expect_equal_file EXPECTED OUTPUT
 
+backup_database
 test_begin_subtest 'roundtripping random message-ids and tags'
 
     ${TEST_DIRECTORY}/random-corpus --config-path=${NOTMUCH_CONFIG} \
@@ -338,7 +366,7 @@ test_begin_subtest 'roundtripping random message-ids and tags'
 	 sort > OUTPUT.$test_count
 
 test_expect_equal_file EXPECTED.$test_count OUTPUT.$test_count
+restore_database
 
 test_done
 
-# Note the database is "poisoned" for sup format at this point.
