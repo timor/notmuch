@@ -75,6 +75,16 @@ notmuch reindex '*'
 notmuch dump | grep '^#=' | sort > OUTPUT
 test_expect_equal_file prop-dump OUTPUT
 
+test_begin_subtest "reindex with saved query from config file"
+query_name="test${RANDOM}"
+count1=$(notmuch count --lastmod '*' | cut -f3)
+cp notmuch-config old-config
+printf "\n[query]\n${query_name} = tag:inbox\n" >> notmuch-config
+notmuch reindex query:$query_name
+count2=$(notmuch count --lastmod '*' | cut -f3)
+cp old-config notmuch-config
+test_expect_success "test '$count2 -gt $count1'"
+
 add_email_corpus lkml
 
 test_begin_subtest "reindex of lkml corpus preserves threads"
