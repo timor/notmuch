@@ -58,6 +58,30 @@ On Tue, 05 Jan 2010 15:43:56 -0000, Sender <sender@example.com> wrote:
 > reply with CC
 OK"
 
+test_begin_subtest "reply with saved query from config file"
+query_name="test${RANDOM}"
+printf "Before:\n" > OUTPUT
+notmuch reply query:$query_name 2>&1 >> OUTPUT
+cp notmuch-config old-config
+printf "\n[query]\n${query_name} = id:${gen_msg_id}\n" >> notmuch-config
+printf "After:\n" >> OUTPUT
+notmuch reply query:$query_name >> OUTPUT
+cat <<EOF > EXPECTED
+Before:
+After:
+From: Notmuch Test Suite <test_suite@notmuchmail.org>
+Subject: Re: notmuch-reply-test
+To: Sender <sender@example.com>
+Cc: Other Parties <cc@example.com>
+In-Reply-To: <msg-003@notmuch-test-suite>
+References: <msg-003@notmuch-test-suite>
+
+On Tue, 05 Jan 2010 15:43:56 -0000, Sender <sender@example.com> wrote:
+> reply with CC
+EOF
+cp old-config notmuch-config
+test_expect_equal_file EXPECTED OUTPUT
+
 test_begin_subtest "Reply from alternate address"
 add_message '[from]="Sender <sender@example.com>"' \
 	     [to]=test_suite_other@notmuchmail.org \
