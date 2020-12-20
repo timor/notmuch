@@ -142,6 +142,21 @@ bsearch_first (notmuch_string_pair_t *array, size_t len, const char *key, bool e
 	return NULL;
 
 }
+void
+_notmuch_string_map_set (notmuch_string_map_t *map, const char *key, const char *val)
+{
+    notmuch_string_pair_t *pair;
+
+    /* this means that calling string_map_set invalidates iterators */
+    _notmuch_string_map_sort (map);
+    pair = bsearch_first (map->pairs, map->length, key, true);
+    if (! pair)
+       _notmuch_string_map_append (map, key, val);
+    else {
+       talloc_free (pair->value);
+       pair->value = talloc_strdup (map->pairs, val);
+    }
+}
 
 const char *
 _notmuch_string_map_get (notmuch_string_map_t *map, const char *key)
