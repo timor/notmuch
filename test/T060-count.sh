@@ -154,4 +154,15 @@ print("4: {} messages".format(query.count_messages()))
 EOF
 test_expect_equal_file EXPECTED OUTPUT
 
+test_begin_subtest "count with saved query from config file"
+query_name="test${RANDOM}"
+notmuch count query:$query_name > OUTPUT
+printf "\n[query]\n${query_name} = tag:inbox\n" >> notmuch-config
+notmuch count query:$query_name >> OUTPUT
+cat <<EOF > EXPECTED
+0
+52
+EOF
+test_expect_equal_file EXPECTED OUTPUT
+
 test_done
