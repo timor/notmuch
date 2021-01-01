@@ -303,6 +303,7 @@ cat <<'EOF' >EXPECTED
 MAIL_DIR
 
 inbox;unread
+NULL
 true
 NULL
 NULL
