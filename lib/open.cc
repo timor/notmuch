@@ -378,6 +378,7 @@ notmuch_database_create_with_config (const char *database_path,
     char *notmuch_path = NULL;
     char *message = NULL;
     GKeyFile *key_file = NULL;
+    bool database_exists = false;
     struct stat st;
     int err;
 
@@ -403,12 +404,15 @@ notmuch_database_create_with_config (const char *database_path,
     notmuch_path = talloc_asprintf (NULL, "%s/%s", database_path, ".notmuch");
 
     err = mkdir (notmuch_path, 0755);
-
     if (err) {
-	IGNORE_RESULT (asprintf (&message, "Error: Cannot create directory %s: %s.\n",
-				 notmuch_path, strerror (errno)));
-	status = NOTMUCH_STATUS_FILE_ERROR;
-	goto DONE;
+	if (errno == EEXIST) {
+	    database_exists = true;
+	} else {
+	    IGNORE_RESULT (asprintf (&message, "Error: Cannot create directory %s: %s.\n",
+				     notmuch_path, strerror (errno)));
+	    status = NOTMUCH_STATUS_FILE_ERROR;
+	    goto DONE;
+	}
     }
 
     /* XXX this reads the config file twice, which is a bit wasteful */
@@ -418,6 +422,9 @@ notmuch_database_create_with_config (const char *database_path,
 						profile,
 						&notmuch, &message);
     if (status)
+	goto DONE;
+
+    if (database_exists)
 	goto DONE;
 
     /* Upgrade doesn't add these feature to existing databases, but
