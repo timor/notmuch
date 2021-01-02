@@ -1278,10 +1278,12 @@ notmuch_new_command (notmuch_config_t *config, unused(notmuch_database_t *notmuc
 	fprintf (stderr, "Note: A fatal error was encountered: %s\n",
 		 notmuch_status_to_string (ret));
 
-    notmuch_database_destroy (notmuch);
+    notmuch_database_close (notmuch);
 
     if (hooks && ! ret && ! interrupted)
 	ret = notmuch_run_hook (db_path, "post-new");
+
+    notmuch_database_close (notmuch);
 
     if (ret || interrupted)
 	return EXIT_FAILURE;
