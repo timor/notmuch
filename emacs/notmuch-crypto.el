@@ -90,8 +90,9 @@ mode."
   'help-echo "Set notmuch-crypto-process-mime to process cryptographic mime parts."
   :supertype 'notmuch-button-type)
 
-(defun notmuch-crypto-insert-sigstatus-button (sigstatus from)
-  (let* ((status (plist-get sigstatus :status))
+(defun notmuch-crypto-insert-sigstatus-button (part from)
+  (let* ((sigstatus (car (plist-get part :sigstatus)))
+	 (status (plist-get sigstatus :status))
 	 (help-msg nil)
 	 (show-button t)
 	 (label nil)
@@ -132,7 +133,13 @@ mode."
        'mouse-face face
        'action button-action
        :notmuch-sigstatus sigstatus
-       :notmuch-from from)
+       :notmuch-from from
+       :notmuch-epg-program (if (let* ((content (plist-get part :content))
+				       (signature-part (second content)))
+				  (string= (plist-get signature-part :content-type) "application/pkcs7-signature"))
+				epg-gpgsm-program
+			      epg-gpg-program)
+       )
       (insert "\n"))))
 
 (declare-function notmuch-show-refresh-view "notmuch-show" (&optional reset-state))
@@ -141,7 +148,9 @@ mode."
   (let* ((sigstatus (button-get button :notmuch-sigstatus))
 	 (fingerprint (concat "0x" (plist-get sigstatus :fingerprint)))
 	 (buffer (get-buffer-create "*notmuch-crypto-gpg-out*"))
-	 (window (display-buffer buffer t nil)))
+	 (window (display-buffer buffer t nil))
+	 (epg-gpg-program (or (button-get button :notmuch-epg-program)
+			      epg-gpg-program)))
     (with-selected-window window
       (with-current-buffer buffer
 	(goto-char (point-max))

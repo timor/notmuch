@@ -661,7 +661,7 @@ will return nil if the CID is unknown or cannot be retrieved."
     (button-put button 'face 'notmuch-crypto-part-header))
 
   ;; Insert a button detailing the signature status.
-  (notmuch-crypto-insert-sigstatus-button (car (plist-get part :sigstatus))
+  (notmuch-crypto-insert-sigstatus-button part
 					  (notmuch-show-get-header :From msg))
 
   (let ((inner-parts (plist-get part :content))
@@ -683,7 +683,7 @@ will return nil if the CID is unknown or cannot be retrieved."
   (notmuch-crypto-insert-encstatus-button (car (plist-get part :encstatus)))
 
   ;; Insert a button detailing the signature status.
-  (notmuch-crypto-insert-sigstatus-button (car (plist-get part :sigstatus))
+  (notmuch-crypto-insert-sigstatus-button part
 					  (notmuch-show-get-header :From msg))
 
   (let ((inner-parts (plist-get part :content))
