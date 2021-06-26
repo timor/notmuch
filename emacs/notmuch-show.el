@@ -697,6 +697,23 @@ will return nil if the CID is unknown or cannot be retrieved."
 (defun notmuch-show-insert-part-application/pgp-encrypted (msg part content-type nth depth button)
   t)
 
+(defun notmuch-show-insert-part-application/pkcs7-mime (msg part content-type
+							    nth depth button)
+  (let* ((encstatus-plist (car (plist-get part :encstatus)))
+         (encstatus (plist-get encstatus-plist :status)))
+    (notmuch-crypto-insert-encstatus-button encstatus-plist)
+    (if (not (string= encstatus "bad"))
+        (notmuch-show-insert-part-multipart/signed msg
+                                                   (car (plist-get part
+								   :content))
+                                                   content-type
+                                                   nth
+                                                   depth
+                                                   button))))
+
+(fset 'notmuch-show-insert-part-application/x-pkcs7-mime
+      'notmuch-show-insert-part-application/pkcs7-mime)
+
 (defun notmuch-show-insert-part-multipart/* (msg part content-type nth depth button)
   (let ((inner-parts (plist-get part :content))
 	(start (point)))
